@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myanmar Earthquake Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    html, body {
+        height: 100%;
+        background-color: #f5f5f5;
+        color: #333;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #e63946;
+        padding-bottom: 10px;
+        position: relative;
+    }
+
+    .logos {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+    }
+
+    .mrcs-logo, .ifrc-logo {
+        height: 55px;
+        width: auto;
+        margin-right: 15px;
+    }
+
+    .title {
+        flex-grow: 1;
+    }
+
+    .title h1 {
+        color: #e63946;
+        font-size: 28px;
+        margin-bottom: 5px;
+    }
+
+    .title p {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .update-time {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: #666;
+        font-size: 12px;
+        text-align: right;
+    }
+
+    .dashboard {
+        display: flex;
+        flex: 1;
+        gap: 20px;
+        overflow: hidden;
+    }
+
+    .left-column {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 50%;
+        overflow-y: auto;
+        max-height: calc(100vh - 180px);
+        padding-right: 5px;
+    }
+
+    .right-column {
+        width: 50%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .situation, .response, .map-container {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 10px;
+    }
+
+    .situation {
+        flex: 0 0 auto;
+    }
+
+    .response {
+        flex: 1 0 auto;
+    }
+
+    .map-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 180px);
+    }
+
+    h2 {
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+        color: #333;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon {
+        width: 36px;
+        height: 36px;
+        background-color: #e6394620;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #e63946;
+        font-size: 18px;
+    }
+
+    .stat-info h3 {
+        font-size: 20px;
+        color: #e63946;
+        margin-bottom: 3px;
+    }
+
+    .stat-info p {
+        font-size: 11px;
+        color: #666;
+    }
+
+    .map {
+        flex: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 5px;
+        min-height: 300px; /* Ensure minimum height for the map */
+    }
+
+    #myanmarMap {
+        height: 100%;
+        width: 100%;
+    }
+
+    .response-resources {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .resource-card {
+        background-color: #f9f9f9;
+        border-radius: 6px;
+        padding: 6px;
+        text-align: center;
+        transition: transform 0.3s;
+    }
+
+    .resource-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .resource-icon {
+        font-size: 15px;
+        color: #e63946;
+        margin-bottom: 2px;
+    }
+
+    .resource-info h4 {
+        font-size: 11px;
+        color: #333;
+        margin-bottom: 1px;
+        white-space: nowrap;
+    }
+
+    .resource-info p {
+        font-size: 13px;
+        color: #e63946;
+        font-weight: bold;
+    }
+
+    .deployment {
+        margin-top: 15px;
+    }
+
+    .deployment-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 8px;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .deployment-location {
+        font-weight: bold;
+        margin-right: 10px;
+        color: #e63946;
+        /* min-width: 100px; */
+        min-width: 80px; /* Reduced from 100px */
+        max-width: 80px; /* Added to constrain width */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* Adds "..." if text is too long */
+    }
+
+    .deployment-resources {
+        /* display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 5px; */
+        background-color: #e6394620;
+        border-radius: 5px;
+        padding: 3px 6px; /* Reduced from 4px 8px */
+        font-size: 10px; /* Reduced from 11px */
+        display: flex;
+        align-items: center;
+}
+
+.deployment-resource i {
+    margin-right: 5px; /* Reduced from 5px */
+    }
+
+    .deployment-resource {
+        background-color: #e6394620;
+        border-radius: 5px;
+        padding: 4px 8px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+    }
+
+    .deployment-resource i {
+        margin-right: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard {
+            flex-direction: column;
+        }
+
+        .left-column, .right-column {
+            width: 100%;
+        }
+
+        .left-column {
+            max-height: none;
+            overflow-y: visible;
+        }
+
+        .map-container {
+            height: 400px; /* Fixed height for tablets */
+            min-height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .map {
+            height: 350px; /* Fixed height for the map on tablets */
+            min-height: 350px;
+        }
+
+        #myanmarMap {
+            height: 100% !important;
+            width: 100% !important;
+        }
+
+        .stats, .response-resources {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logos {
+            margin-bottom: 10px;
+        }
+
+        .update-time {
+            position: relative;
+            margin-top: 10px;
+            text-align: left;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats, .response-resources {
+            grid-template-columns: 1fr;
+        }
+
+        .map-container {
+            height: 300px; /* Fixed height for phones */
+            min-height: 300px;
+        }
+
+        .map {
+            height: 250px; /* Fixed height for the map on phones */
+            min-height: 250px;
+        }
+
+        .title h1 {
+            font-size: 20px;
+        }
+
+        .deployment-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .deployment-location {
+            margin-bottom: 5px;
+        }
+    }
+
+    .footer {
+        margin-top: 20px;
+        text-align: center;
+        color: #666;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .legend {
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        border-radius: 3px;
+    }
+
+    /* Custom scrollbar */
+    .left-column::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .left-column::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .left-column::-webkit-scrollbar-thumb {
+        background: #e63946;
+        border-radius: 10px;
+    }
+
+    .left-column::-webkit-scrollbar-thumb:hover {
+        background: #d32f2f;
+    }
+
+    /* Custom marker icon */
+    .epicenter-icon {
+        color: #e63946;
+        font-size: 24px;
+        text-shadow: 0 0 3px rgba(0,0,0,0.5);
+    }
+
+    /* Loading indicator */
+    .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .loading-spinner {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #e63946;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logos">
+                <img src="ifrcv3.png" alt="IFRC" class="ifrc-logo">
+                <img src="Myanmar_Red_Cross_Society_logo.png" alt="Myanmar Red Cross Society" class="mrcs-logo">
+            </div>
+            <div class="title">
+                <h1>Myanmar Earthquake: Myanmar Red Cross Response</h1>
+                <p>From 29 March to 04 April 2025</p>
+            </div>
+            <div class="update-time">
+                <p>Last updated: <span id="lastUpdated">April 2, 2025</span></p>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <div class="left-column">
+                <div class="situation">
+                    <h3>Situation</h3>
+                    <div class="stats" id="situationStats">
+                        <!-- Stats will be populated dynamically -->
+                        <div class="stat-card">
+                            <div class="icon">
+                                <i class="fas fa-globe-asia"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>...</h3>
+                                <p>Affected Regions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="response">
+                    <h3>MRCS Response</h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <p>Targeted people: <strong style="color: #e63946; font-size: 18px;" id="targetedPeople">...</strong></p>
+                        <p>Volunteers deployed: <strong style="color: #e63946; font-size: 18px;" id="volunteersDeployed">...</strong></p>
+                    </div>
+
+                    <div class="response-resources" id="responseResources">
+                        <!-- Resources will be populated dynamically -->
+                    </div>
+
+                    <div class="deployment" id="deploymentList">
+                        <!-- Deployments will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="map-container">
+                    <h3>Affected Areas</h3>
+                    <div class="map" id="myanmarMap"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 Myanmar Red Cross Society.</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Replace this URL with your published Google Sheet CSV URL
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRNVHxawkVLpMpasFNgSwQuTVOcoYOBVteq5CgSF9vQpkou-bVuRqrixCtEKuuHRg9A2B62VBztzCQP/pub?gid=1071448117&single=true&output=csv';
+
+        // Fallback data in case the CSV fails to load
+        const fallbackRegionData = [
+            {
+                name: 'Nay Pyi Taw',
+                coords: [19.7633, 96.0785],
+                severity: 'medium',
+                deaths: 544,
+                injured: 1181,
+                missing: 26,
+                affected: 0,
+                households: 677,
+                volunteers: 154,
+                color: '#f4a261',
+                radius: 40000,
+                Mobile_Clinics: 0,
+                Ambulances: 0,
+                Water_Units: 0,
+                First_Aid_Kits: 0,
+                Advanced_First_Aid_Kits: 0,
+                Trauma_First_Aid_Kits: 10
+            },
+            {
+                name: 'Mandalay',
+                coords: [21.9769, 96.0869],
+                severity: 'high',
+                deaths: 407,
+                injured: 61,
+                missing: 0,
+                affected: 252592,
+                households: 57793,
+                volunteers: 113,
+                color: '#e63946',
+                radius: 50000,
+                Mobile_Clinics: 2,
+                Ambulances: 1,
+                Water_Units: 1,
+                First_Aid_Kits: 0,
+                Advanced_First_Aid_Kits: 0,
+                Trauma_First_Aid_Kits: 0
+            },
+            {
+                name: 'Sagaing',
+                coords: [23.2787, 95.1797],
+                severity: 'high',
+                deaths: 856,
+                injured: 1913,
+                missing: 164,
+                affected: 0,
+                households: 1032,
+                volunteers: 177,
+                color: '#e63946',
+                radius: 50000,
+                Mobile_Clinics: 1,
+                Ambulances: 1,
+                Water_Units: 1,
+                First_Aid_Kits: 0,
+                Advanced_First_Aid_Kits: 0,
+                Trauma_First_Aid_Kits: 0
+            },
+            {
+                name: 'Bago',
+                coords: [17.3350, 96.4922],
+                severity: 'medium',
+                deaths: 37,
+                injured: 204,
+                missing: 0,
+                affected: 0,
+                households: 568,
+                volunteers: 105,
+                color: '#f4a261',
+                radius: 40000,
+                Mobile_Clinics: 0,
+                Ambulances: 0,
+                Water_Units: 0,
+                First_Aid_Kits: 5,
+                Advanced_First_Aid_Kits: 0,
+                Trauma_First_Aid_Kits: 0
+            },
+            {
+                name: 'Southern Shan',
+                coords: [20.7800, 97.0300],
+                severity: 'low',
+                deaths: 33,
+                injured: 0,
+                missing: 0,
+                affected: 0,
+                households: 0,
+                volunteers: 54,
+                color: '#ffdd00',
+                radius: 30000,
+                Mobile_Clinics: 0,
+                Ambulances: 0,
+                Water_Units: 0,
+                First_Aid_Kits: 0,
+                Advanced_First_Aid_Kits: 0,
+                Trauma_First_Aid_Kits: 0
+            }
+        ];
+
+        // Function to format numbers with commas
+        function formatNumber(num) {
+            return num ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "0";
+        }
+
+        // Function to create resource cards
+        function createResourceCards(regions) {
+            const resourcesContainer = document.getElementById('responseResources');
+            resourcesContainer.innerHTML = '';
+
+            // Define resource types and their icons
+            const resourceTypes = {
+                'Mobile_Clinics': { icon: 'fa-house-medical', label: 'Mobile Clinics' },
+                'Ambulances': { icon: 'fa-truck-medical', label: 'Ambulances' },
+                'Water_Units': { icon: 'fa-droplet', label: 'Water Units' },
+                'First_Aid_Kits': { icon: 'fa-kit-medical', label: 'First Aid Kits' },
+                'Advanced_First_Aid_Kits': { icon: 'fa-briefcase-medical', label: 'Advanced First Aid Kits' },
+                'Trauma_First_Aid_Kits': { icon: 'fa-kit-medical', label: 'Trauma First Aid Kits' }
+            };
+
+            // Count resources from all regions
+            const resourceCounts = {};
+
+            // Initialize all resource counts to 0
+            for (const type in resourceTypes) {
+                resourceCounts[type] = 0;
+            }
+
+            // Sum up resources from each region
+            regions.forEach(region => {
+                for (const type in resourceTypes) {
+                    // Convert to number and add to total (handle NaN)
+                    const count = parseInt(region[type]) || 0;
+                    resourceCounts[type] += count;
+                }
+            });
+
+            // Create cards for each resource type
+            for (const [type, count] of Object.entries(resourceCounts)) {
+                if (count > 0) {
+                    const resourceInfo = resourceTypes[type];
+
+                    const card = document.createElement('div');
+                    card.className = 'resource-card';
+                    card.innerHTML = 
+                        '<div class="resource-icon">' +
+                        '<i class="fas ' + resourceInfo.icon + '"></i>' +
+                        '</div>' +
+                        '<div class="resource-info">' +
+                        '<h4>' + resourceInfo.label + '</h4>' +
+                        '<p>' + count + '</p>' +
+                        '</div>';
+
+                    resourcesContainer.appendChild(card);
+                }
+            }
+        }
+
+        // Function to create deployment items
+        function createDeploymentItems(regions) {
+            const deploymentList = document.getElementById('deploymentList');
+            deploymentList.innerHTML = '';
+
+            regions.forEach(region => {
+                const deploymentItem = document.createElement('div');
+                deploymentItem.className = 'deployment-item';
+
+                const locationDiv = document.createElement('div');
+                locationDiv.className = 'deployment-location';
+                locationDiv.textContent = region.name;
+
+                const resourcesDiv = document.createElement('div');
+                resourcesDiv.className = 'deployment-resources';
+
+                // Add volunteer resource
+                const volunteerResource = document.createElement('div');
+                volunteerResource.className = 'deployment-resource';
+                volunteerResource.innerHTML = '<i class="fas fa-people-group"></i> ' + region.volunteers + ' Volunteers';
+                resourcesDiv.appendChild(volunteerResource);
+
+                // Add other resources
+                const resourceTypes = {
+                    'Mobile_Clinics': { icon: 'fa-house-medical', label: 'Mobile Clinics' },
+                    'Ambulances': { icon: 'fa-truck-medical', label: 'Ambulances' },
+                    'Water_Units': { icon: 'fa-droplet', label: 'Water Units' },
+                    'First_Aid_Kits': { icon: 'fa-kit-medical', label: 'First Aid Kits' },
+                    'Advanced_First_Aid_Kits': { icon: 'fa-briefcase-medical', label: 'Advanced First Aid Kits' },
+                    'Trauma_First_Aid_Kits': { icon: 'fa-kit-medical', label: 'Trauma First Aid Kits' }
+                };
+
+                for (const [type, info] of Object.entries(resourceTypes)) {
+                    const count = parseInt(region[type]) || 0;
+                    if (count > 0) {
+                        const resourceDiv = document.createElement('div');
+                        resourceDiv.className = 'deployment-resource';
+                        resourceDiv.innerHTML = '<i class="fas ' + info.icon + '"></i> ' + count + ' ' + info.label;
+                        resourcesDiv.appendChild(resourceDiv);
+                    }
+                }
+
+                deploymentItem.appendChild(locationDiv);
+                deploymentItem.appendChild(resourcesDiv);
+                deploymentList.appendChild(deploymentItem);
+            });
+        }
+
+        // Function to create situation stats
+        function createSituationStats(regions) {
+            const statsContainer = document.getElementById('situationStats');
+            statsContainer.innerHTML = '';
+
+            // Calculate totals
+            let totalDeaths = 0;
+            let totalInjured = 0;
+            let totalMissing = 0;
+            let totalAffected = 0;
+            let totalHouseholds = 0;
+
+            regions.forEach(region => {
+                totalDeaths += region.deaths || 0;
+                totalInjured += region.injured || 0;
+                totalMissing += region.missing || 0;
+                totalAffected += region.affected || 0;
+                totalHouseholds += region.households || 0;
+            });
+
+            // Create stat cards
+            const stats = [
+                { icon: 'fa-globe-asia', value: regions.length, label: 'Affected Regions' },
+                { icon: 'fa-people-group', value: totalAffected, label: 'People Affected', format: true },
+                { icon: 'fa-person-circle-xmark', value: totalDeaths, label: 'Casualties', format: true },
+                { icon: 'fa-user-injured', value: totalInjured, label: 'Injured People', format: true },
+                { icon: 'fa-person-walking-arrow-right', value: totalMissing, label: 'Missing People', format: true },
+                { icon: 'fa-house-circle-xmark', value: totalHouseholds, label: 'Affected Households', format: true }
+            ];
+
+            stats.forEach(stat => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+
+                const displayValue = stat.format ? formatNumber(stat.value) : stat.value;
+                const suffix = stat.value > 1000 ? 'K' : '';
+                const formattedValue = stat.value > 1000 ? (stat.value / 1000).toFixed(1) + suffix : displayValue;
+
+                card.innerHTML = 
+                    '<div class="icon">' +
+                    '<i class="fas ' + stat.icon + '"></i>' +
+                    '</div>' +
+                    '<div class="stat-info">' +
+                    '<h3>' + formattedValue + '</h3>' +
+                    '<p>' + stat.label + '</p>' +
+                    '</div>';
+
+                statsContainer.appendChild(card);
+            });
+
+            // Update targeted people and volunteers
+            document.getElementById('targetedPeople').textContent = formatNumber(totalAffected) + (totalAffected > 1000 ? 'K' : '');
+
+            let totalVolunteers = 0;
+            regions.forEach(region => {
+                totalVolunteers += region.volunteers || 0;
+            });
+            document.getElementById('volunteersDeployed').textContent = totalVolunteers;
+        }
+
+        // Function to initialize the map
+        function initializeMap(regions) {
+            // Initialize the map
+            const map = L.map('myanmarMap').setView([21.9162, 95.9560], 6);
+
+            // Add Carto Light basemap with English labels
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Add circles for affected regions
+            const bounds = [];
+            regions.forEach(region => {
+                const circle = L.circle(region.coords, {
+                    color: 'white',
+                    fillColor: region.color,
+                    fillOpacity: 0.5,
+                    radius: region.radius,
+                    weight: 2
+                }).addTo(map);
+
+                let popupContent = '<b>' + region.name + '</b>';
+                popupContent += '<br>Deaths: ' + formatNumber(region.deaths);
+                popupContent += '<br>Injured: ' + formatNumber(region.injured);
+
+                if (region.missing > 0) {
+                    popupContent += '<br>Missing: ' + formatNumber(region.missing);
+                }
+
+                if (region.affected > 0) {
+                    popupContent += '<br>Affected people: ' + formatNumber(region.affected);
+                }
+
+                if (region.households > 0) {
+                    popupContent += '<br>Affected households: ' + formatNumber(region.households);
+                }
+
+                popupContent += '<br>Severity: ' + region.severity;
+
+                circle.bindPopup(popupContent);
+
+                // Add label
+                L.marker(region.coords, {
+                    icon: L.divIcon({
+                        className: 'region-label',
+                        html: '<div style="background-color: rgba(255, 255, 255, 0.7); padding: 3px 6px; border-radius: 3px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">' + region.name + '</div>',
+                        iconSize: [100, 20],
+                        iconAnchor: [50, 10]
+                    })
+                }).addTo(map);
+
+                bounds.push(region.coords);
+            });
+
+            // Add epicenter marker with custom icon
+            const epicenterIcon = L.divIcon({
+                className: 'epicenter-icon',
+                html: '<i class="fas fa-burst" style="color: #e63946; font-size: 24px;"></i>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            const epicenter = L.marker([21.9963, 95.9258], {
+                icon: epicenterIcon,
+                title: 'Earthquake Epicenter'
+            }).addTo(map);
+
+            epicenter.bindPopup('<b>Earthquake Epicenter</b><br>Magnitude: 7.7<br>Depth: 10km<br>Date: March 29, 2025');
+            bounds.push([21.9963, 95.9258]);
+
+            // Add legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = '<h4>Impact Severity</h4>';
+
+                const severities = [
+                    {label: 'High', color: '#e63946'},
+                    {label: 'Medium', color: '#f4a261'},
+                    {label: 'Low', color: '#ffdd00'}
+                ];
+
+                for (const severity of severities) {
+                    div.innerHTML += 
+                        '<div class="legend-item">' +
+                        '<div class="legend-color" style="background-color: ' + severity.color + '"></div>' +
+                        '<span>' + severity.label + '</span>' +
+                        '</div>';
+                }
+
+                div.innerHTML += '<div class="legend-item"><div style="width: 20px; height: 20px; margin-right: 8px; display: flex; justify-content: center; align-items: center;"><i class="fas fa-burst" style="color: #e63946;"></i></div><span>Epicenter</span></div>';
+
+                return div;
+            };
+            legend.addTo(map);
+
+            // Fit map to bounds
+            if (bounds.length > 0) {
+                map.fitBounds(bounds);
+            }
+
+            // Force map to invalidate size after rendering
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 100);
+
+            // Add resize handler to ensure map renders correctly on mobile
+            window.addEventListener('resize', function() {
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 200);
+            });
+        }
+
+        // Main function to load data and initialize dashboard
+        function loadData() {
+            Papa.parse(csvUrl, {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        // Process the CSV data
+                        const regions = results.data.map(row => {
+                            // Map CSV columns to region object properties
+                            return {
+                                name: row.Region,
+                                deaths: parseInt(row.Deaths) || 0,
+                                injured: parseInt(row.Injured) || 0,
+                                missing: parseInt(row.Missing) || 0,
+                                affected: parseInt(row.Affected_People) || 0,
+                                households: parseInt(row.Affected_Households) || 0,
+                                volunteers: parseInt(row.Volunteers) || 0,
+                                severity: row.Severity,
+                                coords: [parseFloat(row.Coordinates_Lat), parseFloat(row.Coordinates_Lng)],
+                                // Add resource columns
+                                Mobile_Clinics: parseInt(row.Mobile_Clinics) || 0,
+                                Ambulances: parseInt(row.Ambulances) || 0,
+                                Water_Units: parseInt(row.Water_Units) || 0,
+                                First_Aid_Kits: parseInt(row.First_Aid_Kits) || 0,
+                                Advanced_First_Aid_Kits: parseInt(row.Advanced_First_Aid_Kits) || 0,
+                                Trauma_First_Aid_Kits: parseInt(row.Trauma_First_Aid_Kits) || 0,
+                                // Set color based on severity
+                                color: row.Severity === 'high' ? '#e63946' : 
+                                       row.Severity === 'medium' ? '#f4a261' : '#ffdd00',
+                                radius: row.Severity === 'high' ? 50000 : 
+                                        row.Severity === 'medium' ? 40000 : 30000
+                            };
+                        });
+
+                        // Initialize dashboard with the loaded data
+                        initializeDashboard(regions);
+
+                        // Update last updated time
+                        const now = new Date();
+                        document.getElementById('lastUpdated').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+                    } else {
+                        console.error('No data found in CSV');
+                        initializeDashboard(fallbackRegionData);
+                    }
+
+                    // Hide loading indicator
+                    document.getElementById('loading').style.display = 'none';
+                },
+                error: function(error) {
+                    console.error('Error loading CSV:', error);
+                    initializeDashboard(fallbackRegionData);
+
+                    // Hide loading indicator
+                    document.getElementById('loading').style.display = 'none';
+                }
+            });
+        }
+
+        // Function to initialize the dashboard with data
+        function initializeDashboard(regions) {
+            // Store regions globally for use in other functions
+            window.regions = regions;
+
+            // Create situation stats
+            createSituationStats(regions);
+
+            // Create resource cards
+            createResourceCards(regions);
+
+            // Create deployment items
+            createDeploymentItems(regions);
+
+            // Initialize map
+            initializeMap(regions);
+        }
+
+        // Load data when page loads
+        loadData();
+    });
+    </script>
+</body>
+</html>
