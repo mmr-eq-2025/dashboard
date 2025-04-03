@@ -757,15 +757,19 @@
                 card.className = 'stat-card';
 
                 const displayValue = stat.format ? formatNumber(stat.value) : stat.value;
-                const suffix = stat.value > 1000 ? 'K' : '';
-                const formattedValue = stat.value > 1000 ? (stat.value / 1000).toFixed(1) + suffix : displayValue;
+                // Thousand Conversion logic, disable for absolute value
+                // const suffix = stat.value > 1000 ? 'K' : '';
+                // const formattedValue = stat.value > 1000 ? (stat.value / 1000).toFixed(1) + suffix : displayValue;
 
                 card.innerHTML = 
                     '<div class="icon">' +
                     '<i class="fas ' + stat.icon + '"></i>' +
                     '</div>' +
                     '<div class="stat-info">' +
-                    '<h3>' + formattedValue + '</h3>' +
+                    // Absolute value 
+                    '<h3>' + displayValue + '</h3>' +
+                    // Thousand Conversion logic, disable for absolute value
+                    // '<h3>' + formattedValue + '</h3>' +
                     '<p>' + stat.label + '</p>' +
                     '</div>';
 
@@ -773,7 +777,9 @@
             });
 
             // Update targeted people and volunteers
-            document.getElementById('targetedPeople').textContent = formatNumber(totalAffected) + (totalAffected > 1000 ? 'K' : '');
+            document.getElementById('targetedPeople').textContent = formatNumber(totalAffected);
+            // Thousand conversion logic, disable for absolute value
+            // document.getElementById('targetedPeople').textContent = formatNumber(totalAffected) + (totalAffected > 1000 ? 'K' : '');
 
             let totalVolunteers = 0;
             regions.forEach(region => {
