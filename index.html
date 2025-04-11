@@ -450,8 +450,8 @@
     <div class="container">
         <header>
             <div class="logos">
-                <img src="ifrcv3.png" alt="IFRC" class="ifrc-logo">
-                <img src="Myanmar_Red_Cross_Society_logo.png" alt="Myanmar Red Cross Society" class="mrcs-logo">
+                <img src="ifrc.png" alt="IFRC" class="ifrc-logo">
+                <img src="mrcs.png" alt="Myanmar Red Cross Society" class="mrcs-logo">
             </div>
             <div class="title">
                 <h1>Myanmar Earthquake: Myanmar Red Cross Society Response</h1>
@@ -525,7 +525,7 @@
                 severity: 'medium',
                 deaths: 544,
                 injured: 1181,
-                missing: 26,
+                displaced: 26, // Changed from missing to displaced
                 affected: 0,
                 households: 677,
                 volunteers: 154,
@@ -544,7 +544,7 @@
                 severity: 'high',
                 deaths: 407,
                 injured: 61,
-                missing: 0,
+                displaced: 0, // Changed from missing to displaced
                 affected: 252592,
                 households: 57793,
                 volunteers: 113,
@@ -563,7 +563,7 @@
                 severity: 'high',
                 deaths: 856,
                 injured: 1913,
-                missing: 164,
+                displaced: 164, // Changed from missing to displaced
                 affected: 0,
                 households: 1032,
                 volunteers: 177,
@@ -582,7 +582,7 @@
                 severity: 'medium',
                 deaths: 37,
                 injured: 204,
-                missing: 0,
+                displaced: 0, // Changed from missing to displaced
                 affected: 0,
                 households: 568,
                 volunteers: 105,
@@ -601,7 +601,7 @@
                 severity: 'low',
                 deaths: 33,
                 injured: 0,
-                missing: 0,
+                displaced: 0, // Changed from missing to displaced
                 affected: 0,
                 households: 0,
                 volunteers: 54,
@@ -730,14 +730,14 @@
             // Calculate totals
             let totalDeaths = 0;
             let totalInjured = 0;
-            let totalMissing = 0;
+            let totalDisplaced = 0; // Changed from totalMissing to totalDisplaced
             let totalAffected = 0;
             let totalHouseholds = 0;
 
             regions.forEach(region => {
                 totalDeaths += region.deaths || 0;
                 totalInjured += region.injured || 0;
-                totalMissing += region.missing || 0;
+                totalDisplaced += region.displaced || 0; // Changed from missing to displaced
                 totalAffected += region.affected || 0;
                 totalHouseholds += region.households || 0;
             });
@@ -746,10 +746,10 @@
             const stats = [
                 { icon: 'fa-globe-asia', value: regions.length, label: 'Targeted States' },
                 { icon: 'fa-people-group', value: totalAffected, label: 'People Affected', format: true },
-                { icon: 'fa-person-circle-xmark', value: totalDeaths, label: 'Casualties', format: true },
-                { icon: 'fa-user-injured', value: totalInjured, label: 'Injured People', format: true },
-                { icon: 'fa-person-circle-question', value: totalMissing, label: 'Missing People', format: true },
-                { icon: 'fa-house-circle-xmark', value: totalHouseholds, label: 'Affected Households', format: true }
+                { icon: 'fa-person-circle-xmark', value: totalDeaths, label: 'People Killed', format: true },
+                { icon: 'fa-user-injured', value: totalInjured, label: 'People Injured', format: true },
+                { icon: 'fa-person-walking-luggage', value: totalDisplaced, label: 'People Displaced', format: true }, // Changed icon and label
+                { icon: 'fa-house-circle-xmark', value: totalHouseholds, label: 'Households Affected', format: true }
             ];
 
             stats.forEach(stat => {
@@ -815,8 +815,8 @@
                 popupContent += '<br>Deaths: ' + formatNumber(region.deaths);
                 popupContent += '<br>Injured: ' + formatNumber(region.injured);
 
-                if (region.missing > 0) {
-                    popupContent += '<br>Missing: ' + formatNumber(region.missing);
+                if (region.displaced > 0) { // Changed from missing to displaced
+                    popupContent += '<br>Displaced: ' + formatNumber(region.displaced); // Changed label from Missing to Displaced
                 }
 
                 if (region.affected > 0) {
@@ -918,7 +918,7 @@
                                 name: row.Region,
                                 deaths: parseInt(row.Deaths) || 0,
                                 injured: parseInt(row.Injured) || 0,
-                                missing: parseInt(row.Missing) || 0,
+                                displaced: parseInt(row.Displaced) || 0, // Changed from Missing to Displaced
                                 affected: parseInt(row.Affected_People) || 0,
                                 households: parseInt(row.Affected_Households) || 0,
                                 volunteers: parseInt(row.Volunteers) || 0,
