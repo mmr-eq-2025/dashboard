@@ -87,7 +87,7 @@
         gap: 20px;
         width: 50%;
         overflow-y: auto;
-        max-height: calc(100vh - 180px);
+        height: calc(100vh - 120px); /* Changed from max-height to height */
         padding-right: 5px;
     }
 
@@ -95,6 +95,7 @@
         width: 50%;
         display: flex;
         flex-direction: column;
+        height: calc(100vh - 120px); /* Added same height as left column */
     }
 
     .impact, .response, .map-container {
@@ -110,13 +111,14 @@
 
     .response {
         flex: 1 0 auto;
+        overflow-y: auto; /* Added overflow for scrolling */
     }
 
     .map-container {
         flex: 1;
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 180px);
+        height: 100%; /* Changed from fixed height to 100% */
     }
 
     h2 {
@@ -175,7 +177,6 @@
         border-radius: 8px;
         overflow: hidden;
         margin-top: 5px;
-        min-height: 300px; /* Ensure minimum height for the map */
     }
 
     #myanmarMap {
@@ -241,30 +242,24 @@
         font-weight: bold;
         margin-right: 10px;
         color: #e63946;
-        /* min-width: 100px; */
-        min-width: 80px; /* Reduced from 100px */
-        max-width: 80px; /* Added to constrain width */
+        min-width: 80px;
+        max-width: 80px;
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis; /* Adds "..." if text is too long */
+        text-overflow: ellipsis;
     }
 
     .deployment-resources {
-        /* display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        overflow-x: auto;
-        padding-bottom: 5px; */
         background-color: #e6394620;
         border-radius: 5px;
-        padding: 3px 6px; /* Reduced from 4px 8px */
-        font-size: 10px; /* Reduced from 11px */
+        padding: 3px 6px;
+        font-size: 10px;
         display: flex;
         align-items: center;
-}
+    }
 
-.deployment-resource i {
-    margin-right: 5px; /* Reduced from 5px */
+    .deployment-resource i {
+        margin-right: 5px;
     }
 
     .deployment-resource {
@@ -287,6 +282,7 @@
 
         .left-column, .right-column {
             width: 100%;
+            height: auto; /* Changed from fixed height */
         }
 
         .left-column {
@@ -295,13 +291,13 @@
         }
 
         .map-container {
-            height: 400px; /* Fixed height for tablets */
+            height: 400px;
             min-height: 400px;
             margin-bottom: 20px;
         }
 
         .map {
-            height: 350px; /* Fixed height for the map on tablets */
+            height: 350px;
             min-height: 350px;
         }
 
@@ -336,12 +332,12 @@
         }
 
         .map-container {
-            height: 300px; /* Fixed height for phones */
+            height: 300px;
             min-height: 300px;
         }
 
         .map {
-            height: 250px; /* Fixed height for the map on phones */
+            height: 250px;
             min-height: 250px;
         }
 
@@ -388,21 +384,21 @@
     }
 
     /* Custom scrollbar */
-    .left-column::-webkit-scrollbar {
+    .left-column::-webkit-scrollbar, .response::-webkit-scrollbar {
         width: 8px;
     }
 
-    .left-column::-webkit-scrollbar-track {
+    .left-column::-webkit-scrollbar-track, .response::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 10px;
     }
 
-    .left-column::-webkit-scrollbar-thumb {
+    .left-column::-webkit-scrollbar-thumb, .response::-webkit-scrollbar-thumb {
         background: #e63946;
         border-radius: 10px;
     }
 
-    .left-column::-webkit-scrollbar-thumb:hover {
+    .left-column::-webkit-scrollbar-thumb:hover, .response::-webkit-scrollbar-thumb:hover {
         background: #d32f2f;
     }
 
