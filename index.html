@@ -97,14 +97,14 @@
         flex-direction: column;
     }
 
-    .situation, .response, .map-container {
+    .impact, .response, .map-container {
         background-color: white;
         border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         padding: 10px;
     }
 
-    .situation {
+    .impact {
         flex: 0 0 auto;
     }
 
@@ -406,13 +406,75 @@
         background: #d32f2f;
     }
 
-    /* Custom marker icon */
-    .epicenter-icon {
-        color: #e63946;
-        font-size: 24px;
-        text-shadow: 0 0 3px rgba(0,0,0,0.5);
+    /* Epicenter marker styling - completely redesigned */
+    .epicenter-marker {
+        position: relative;
+        width: 12px;
+        height: 12px;
     }
-
+    
+    .epicenter-marker:before {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background-color: #e63946;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+    }
+    
+    @keyframes ripple {
+        0% {
+            width: 0px;
+            height: 0px;
+            opacity: 1;
+        }
+        100% {
+            width: 60px;
+            height: 60px;
+            opacity: 0;
+        }
+    }
+    
+    .epicenter-marker:after {
+        content: '';
+        position: absolute;
+        border: 2px solid #e63946;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: ripple 2s infinite;
+        z-index: 999;
+    }
+    
+    .epicenter-marker .ripple-2 {
+        position: absolute;
+        border: 2px solid #e63946;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: ripple 2s infinite;
+        animation-delay: 0.5s;
+        z-index: 998;
+    }
+    
+    .epicenter-marker .ripple-3 {
+        position: absolute;
+        border: 2px solid #e63946;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: ripple 2s infinite;
+        animation-delay: 1s;
+        z-index: 997;
+    }
+    
     /* Loading indicator */
     .loading {
         position: fixed;
@@ -464,8 +526,8 @@
 
         <div class="dashboard">
             <div class="left-column">
-                <div class="situation">
-                    <h3>Situation</h3>
+                <div class="impact">
+                    <h3>Impact</h3>
                     <div class="stats" id="situationStats">
                         <!-- Stats will be populated dynamically -->
                         <div class="stat-card">
@@ -514,6 +576,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Function to calculate circle radius based on impact metrics
+        function calculateRadius(deaths, injured, displaced, affected) {
+            // Calculate a weighted impact score
+            // Deaths are weighted more heavily, followed by injured, displaced, and affected
+            const impactScore = (deaths * 10) + (injured * 3) + (displaced * 2) + (affected * 0.1);
+            
+            // Base radius for minimal impact - REDUCED from 20000 to 10000
+            const minRadius = 10000;
+            
+            // Scale the radius based on impact score
+            // Using logarithmic scaling to handle wide range of values
+            if (impactScore === 0) return minRadius;
+            
+            // Reduced scaling factor from 10000 to 5000
+            const scaledRadius = minRadius + (Math.log(impactScore + 1) * 5000);
+            
+            // Cap the maximum radius - REDUCED from 100000 to 50000
+            return Math.min(scaledRadius, 50000);
+        }
         // Replace this URL with your published Google Sheet CSV URL
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRNVHxawkVLpMpasFNgSwQuTVOcoYOBVteq5CgSF9vQpkou-bVuRqrixCtEKuuHRg9A2B62VBztzCQP/pub?gid=1071448117&single=true&output=csv';
 
@@ -803,9 +884,22 @@
             // Add circles for affected regions
             const bounds = [];
             regions.forEach(region => {
+                // Calculate impact level for color
+                const impactScore = (region.deaths * 10) + (region.injured * 3) + (region.displaced * 2) + (region.affected * 0.1);
+                
+                // Determine color based on impact score
+                let fillColor;
+                if (impactScore > 5000) {
+                    fillColor = '#e6550d'; // More impact
+                } else if (impactScore > 1000) {
+                    fillColor = '#fdae6b'; // Medium impact
+                } else {
+                    fillColor = '#fee6ce'; // Less impact
+                }
+                
                 const circle = L.circle(region.coords, {
                     color: 'white',
-                    fillColor: region.color,
+                    fillColor: fillColor,
                     fillOpacity: 0.5,
                     radius: region.radius,
                     weight: 2
@@ -827,8 +921,6 @@
                     popupContent += '<br>Affected households: ' + formatNumber(region.households);
                 }
 
-                popupContent += '<br>Severity: ' + region.severity;
-
                 circle.bindPopup(popupContent);
 
                 // Add label
@@ -844,12 +936,12 @@
                 bounds.push(region.coords);
             });
 
-            // Add epicenter marker with custom icon
+            // Add epicenter marker with completely redesigned ripple effect
             const epicenterIcon = L.divIcon({
                 className: 'epicenter-icon',
-                html: '<i class="fas fa-burst" style="color: #e63946; font-size: 24px;"></i>',
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
+                html: '<div class="epicenter-marker"><div class="ripple-2"></div><div class="ripple-3"></div></div>',
+                iconSize: [60, 60],
+                iconAnchor: [30, 30]
             });
 
             const epicenter = L.marker([21.9963, 95.9258], {
@@ -864,23 +956,30 @@
             const legend = L.control({position: 'bottomright'});
             legend.onAdd = function(map) {
                 const div = L.DomUtil.create('div', 'legend');
-                div.innerHTML = '<h4>Impact Severity</h4>';
-
-                const severities = [
-                    {label: 'High', color: '#e63946'},
-                    {label: 'Medium', color: '#f4a261'},
-                    {label: 'Low', color: '#ffdd00'}
-                ];
-
-                for (const severity of severities) {
-                    div.innerHTML += 
-                        '<div class="legend-item">' +
-                        '<div class="legend-color" style="background-color: ' + severity.color + '"></div>' +
-                        '<span>' + severity.label + '</span>' +
-                        '</div>';
-                }
-
-                div.innerHTML += '<div class="legend-item"><div style="width: 20px; height: 20px; margin-right: 8px; display: flex; justify-content: center; align-items: center;"><i class="fas fa-burst" style="color: #e63946;"></i></div><span>Epicenter</span></div>';
+                div.innerHTML = '<h4>Impact</h4>';
+                
+                div.innerHTML += 
+                    '<div class="legend-item">' +
+                    '<div style="width: 20px; height: 20px; display: flex; justify-content: center; align-items: center;"><i class="fas fa-circle" style="color: #e6550d; font-size: 16px;"></i></div>' +
+                    '<span>More impact</span>' +
+                    '</div>';
+                
+                div.innerHTML += 
+                    '<div class="legend-item">' +
+                    '<div style="width: 20px; height: 20px; display: flex; justify-content: center; align-items: center;"><i class="fas fa-circle" style="color: #fee6ce; font-size: 8px;"></i></div>' +
+                    '<span>Less impact</span>' +
+                    '</div>';
+                
+                div.innerHTML += 
+                    '<div class="legend-item">' +
+                    '<div style="width: 20px; height: 20px; margin-right: 8px; display: flex; justify-content: center; align-items: center;">' +
+                    '<div style="position: relative; width: 20px; height: 20px;">' +
+                    '<div style="position: absolute; width: 6px; height: 6px; background-color: #e63946; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>' +
+                    '<div style="position: absolute; width: 12px; height: 12px; border: 1px solid #e63946; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>' +
+                    '<div style="position: absolute; width: 18px; height: 18px; border: 1px solid #e63946; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>' +
+                    '</div></div>' +
+                    '<span>Epicenter</span>' +
+                    '</div>';
 
                 return div;
             };
@@ -931,11 +1030,9 @@
                                 First_Aid_Kits: parseInt(row.First_Aid_Kits) || 0,
                                 Advanced_First_Aid_Kits: parseInt(row.Advanced_First_Aid_Kits) || 0,
                                 Trauma_First_Aid_Kits: parseInt(row.Trauma_First_Aid_Kits) || 0,
-                                // Set color based on severity
-                                color: row.Severity === 'high' ? '#e63946' : 
-                                       row.Severity === 'medium' ? '#f4a261' : '#ffdd00',
-                                radius: row.Severity === 'high' ? 50000 : 
-                                        row.Severity === 'medium' ? 40000 : 30000
+                                // Calculate radius based on total impact (deaths + injured + displaced + affected)
+                                radius: calculateRadius(parseInt(row.Deaths) || 0, parseInt(row.Injured) || 0, 
+                                        parseInt(row.Displaced) || 0, parseInt(row.Affected_People) || 0)
                             };
                         });
 
